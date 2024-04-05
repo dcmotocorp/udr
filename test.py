@@ -1,11 +1,19 @@
 import curses
-from utils import shutdown_computer, get_ip_address, restart_computer
 import keyboard
+from utils import shutdown_computer, get_ip_address, restart_computer
+from constant import SYSTEM_CONFIG_LABEL,PASSWORD_LABEL,USERNAME_LABEL,NOVAIGU_HTTP_LABEL,\
+    NOVAIGU_PLATFORM_LABEL,NOVAIGU_LABEL,F2_CONFIGURATION_SYSTEM,SHUT_DOWN_RESTART,AUTHENTICATION_SCREEN,KEY_ESC,\
+    ESC_CANCLE,F11_RESTART,F2_SHUT_DOWN,PASSWORD,HOSTNAME,SSH,LOCK_DOWN_MODE
+
+
+
+
+
 class NovaiguApplication:
     def __init__(self, stdscr):
         self.stdscr = stdscr
         self.popup_win = None
-        self.current_selected = "username"
+        self.current_selected = USERNAME_LABEL
         self.username_input  = ""
         self.password_input  = ""
         self.setup_windows()
@@ -46,37 +54,31 @@ class NovaiguApplication:
         self.top_win.refresh()
         self.bottom_win.refresh()
 
-        # Define labels
-        novaigu_label = "Novaigu Udr 1.0.0"
-        novaigu_platform_label = "Novaigu Inc Platform"
         ip_address = get_ip_address()
-        novaigu_http_label = "Https://{}".format(ip_address)
+        novaigu_http_address = NOVAIGU_HTTP_LABEL.format(ip_address)
 
         # Calculate positions for labels
-        label_width = max(len(novaigu_label), len(novaigu_platform_label), len(novaigu_http_label))
+        label_width = max(len(NOVAIGU_LABEL), len(NOVAIGU_PLATFORM_LABEL), len(novaigu_http_address))
         label_height = 2
         label_x = (self.screen_width - label_width) // 2
         label_y = top_height // 2
 
         # Add labels to self.top_win
-        self.top_win.addstr(label_y, label_x, novaigu_label)
-        self.top_win.addstr(label_y + label_height, label_x, novaigu_platform_label)
-        self.top_win.addstr(label_y + 2 * label_height, label_x, novaigu_http_label)
+        self.top_win.addstr(label_y, label_x, NOVAIGU_LABEL)
+        self.top_win.addstr(label_y + label_height, label_x, NOVAIGU_PLATFORM_LABEL)
+        self.top_win.addstr(label_y + 2 * label_height, label_x, novaigu_http_address)
 
         # Refresh the self.top_win to apply changes
         self.top_win.refresh()
 
         # Add clickable label at the bottom-left corner
-        self.bottom_win.addstr(bottom_height - 2, 1, "<F2> Configuration System", curses.A_UNDERLINE)
+        self.bottom_win.addstr(bottom_height - 2,2, F2_CONFIGURATION_SYSTEM, curses.A_UNDERLINE)
         self.bottom_win.addstr(bottom_height - 2, self.screen_width-len("<F12> Shut down/Restart")-2, "<F12> Shut down/Restart", curses.A_UNDERLINE)
         self.bottom_win.refresh()
 
     
     def create_shut_down_restart_pop_up(self):
-        self.top_win.bkgd(' ', curses.color_pair(0))  # Black background
-        self.bottom_win.bkgd(' ', curses.color_pair(0))
-        self.top_win.refresh()
-        self.bottom_win.refresh()
+        self.set_main_screen_black()
         # Create a pop-up window
         popup_height = 10
         popup_width = 40
@@ -98,52 +100,40 @@ class NovaiguApplication:
 
 
         # Add label to popup_top_win
-        label_text = "Shut Down/Restart"
-        label_x = (popup_width - len(label_text)) // 2
+        label_x = (popup_width - len(SHUT_DOWN_RESTART)) // 2
         label_y = (popup_top_height - 1) // 2  # Center vertically
-        popup_top_win.addstr(label_y, label_x, label_text)
+        popup_top_win.addstr(label_y, label_x, SHUT_DOWN_RESTART)
 
         # Add label to popup_bottom_win
-        label_text_bottom = "<F2> Shut down"
         label_x_bottom = 3
         label_y_bottom =1 # Center vertically
-        popup_bottom_win.addstr(label_y_bottom, label_x_bottom, label_text_bottom)
+        popup_bottom_win.addstr(label_y_bottom, label_x_bottom, F2_SHUT_DOWN)
 
         # Add label to popup_bottom_win
-        label_text_bottom_12 = "<F11> Restart"
         label_x_bottom = 3
         label_y_bottom =3 # Center vertically
-        popup_bottom_win.addstr(label_y_bottom, label_x_bottom, label_text_bottom_12)
+        popup_bottom_win.addstr(label_y_bottom, label_x_bottom, F11_RESTART)
 
         # Add label to popup_bottom_win
-        label_text_bottom_esc = "<Esc> Cancle"
         label_x_bottom = 25
         label_y_bottom =5 # Center vertically
-        popup_bottom_win.addstr(label_y_bottom, label_x_bottom, label_text_bottom_esc)
+        popup_bottom_win.addstr(label_y_bottom, label_x_bottom, ESC_CANCLE)
         self.popup_win.refresh()
 
     def _on_key_press(self, event):
-        if event.name =="esc" :
+        if event.name ==KEY_ESC :
             
             if self.popup_win:
                     self.popup_win.clear()  # KEY_ESC the pop-up window
                     self.popup_win.refresh()
                     self.popup_win.deleteln()
                     self.popup_win = None
-                    self.top_win.bkgd(' ', curses.color_pair(1))  # Grey background
-                    self.bottom_win.bkgd(' ', curses.color_pair(2))  # Orange background
-                    self.top_win.refresh()
-                    self.bottom_win.refresh()
-            if hasattr(self, 'authentication_screen'):
-            # if self.authentication_screen:
-                self.current_selected = "username" 
-                self.authentication_screen.clear()
-                self.authentication_screen.refresh()
-                self.top_win.bkgd(' ', curses.color_pair(1))  # Grey background
-                self.bottom_win.bkgd(' ', curses.color_pair(2))  # Orange background
-                self.top_win.refresh()
-                self.bottom_win.refresh()
-                self.authentication_screen = None
+                    self.reset_main_screen_color()
+            if hasattr(self, AUTHENTICATION_SCREEN):
+                self.current_selected = USERNAME_LABEL 
+                self.clear_authetication_screen()
+                self.reset_main_screen_color()
+                
         
         elif event.name =="f2":
             if self.popup_win:
@@ -160,26 +150,22 @@ class NovaiguApplication:
 
         elif event.name == "enter":
             if hasattr(self, 'authentication_screen'):
-                self.authentication_screen.clear()
-                self.authentication_screen.refresh()
-                self.authentication_screen = None
+                if  self.username_input not in ["",None] or self.password_input not in ["",None]:
+                    self.clear_authetication_screen()
+                    self.clear_user_name_password_screen()
+                    self.create_system_configuration()
+            else:
+                self.current_selected = USERNAME_LABEL 
+                self.set_main_screen_black()
             
-            self.current_selected = "username" 
-            self.top_win.bkgd(' ', curses.color_pair(1))  # Grey background
-            self.bottom_win.bkgd(' ', curses.color_pair(2))  # Orange background
-            self.top_win.refresh()
-            self.bottom_win.refresh()
-            
-
-        
-        elif event.name =="tab" and self.current_selected == "username" :
+        elif event.name =="tab" and self.current_selected == USERNAME_LABEL :
             self.current_selected = "password" 
 
         elif event.name =="tab" and self.current_selected == "password" :
-            self.current_selected = "username"
+            self.current_selected = USERNAME_LABEL
 
         elif  event.name =="backspace":
-            if self.current_selected == "username" :
+            if self.current_selected == USERNAME_LABEL :
                 current_value = self.username_input 
                 self.username_input   = current_value[:len(current_value)-1]
                 self.username_win.clear()
@@ -195,7 +181,7 @@ class NovaiguApplication:
 
         else:
             if len(event.name) ==1:
-                if self.current_selected == "username"  :
+                if self.current_selected == USERNAME_LABEL  :
                     self.username_input += event.name
                     self.username_win.addstr(0, 0, self.username_input, curses.color_pair(1))
                     self.username_win.refresh()
@@ -205,15 +191,33 @@ class NovaiguApplication:
                     self.password_win.addstr(0, 0, "*" * len(self.password_input), curses.color_pair(1))
                     self.password_win.refresh()
         
+    def clear_user_name_password_screen(self):
+        self.username_win.clear()
+        self.username_win.refresh()
+        self.password_win.clear()
+        self.password_win.refresh()
+        self.username_win = None
+        self.password_win = None
+        
+    def clear_authetication_screen(self):
+        self.authentication_screen.clear()
+        self.authentication_screen.refresh()
+        self.authentication_screen = None
     
-    
-    
-    def authentication_screen_model(self):
+    def set_main_screen_black(self):
         self.top_win.bkgd(' ', curses.color_pair(0))  # Black background
         self.bottom_win.bkgd(' ', curses.color_pair(0))
         self.top_win.refresh()
         self.bottom_win.refresh()
         
+    def reset_main_screen_color(self):
+        self.top_win.bkgd(' ', curses.color_pair(1))  # Grey background
+        self.bottom_win.bkgd(' ', curses.color_pair(2))  # Orange background
+        self.top_win.refresh()
+        self.bottom_win.refresh()
+    
+    def authentication_screen_model(self):
+        self.set_main_screen_black()
         # Create a pop-up window
         auth_screen_height = 10
         auth_screen_width = 40
@@ -255,27 +259,20 @@ class NovaiguApplication:
 
         auth_bottom_win.addstr(5, 11, label_text_bottom_enter_ok,curses.color_pair(3))
    
-
-
         # Create username input box
         user_input_y = popup_y +popup_top_height+1
         user_input_x = popup_x +13
         self.username_win = curses.newwin(1, 20, user_input_y, user_input_x)
         self.username_win.refresh()
-        username_input = ""
-
 
         # Print password label
-        password_label = "Password:  ["
-        auth_bottom_win.addstr(3, 1, password_label, curses.color_pair(3))
-        
+        auth_bottom_win.addstr(3, 1, PASSWORD_LABEL, curses.color_pair(3))
         auth_bottom_win.addstr(3, 35, end_bracket_user,curses.color_pair(3))
+        
         # Create password input box\
         password_input_y= user_input_y+2
         self.password_win = curses.newwin(2, 20, password_input_y, user_input_x)
         self.password_win.refresh()
-        password_input = ""
-
 
 
         # Set placeholders for username and password fields
@@ -289,25 +286,46 @@ class NovaiguApplication:
         
         curses.curs_set(1)
         self.authentication_screen.refresh()
-        
-        # keyboard.on_press(self._on_key_press)
-        
-       
-        # Disable cursor
         curses.curs_set(0)
 
+    def create_system_configuration(self):
+        self.set_main_screen_black()
+        
+        sc_config_height, sc_config_width = int(self.screen_height*0.98) , int(self.screen_width*0.99)
+        sc_config_x = int(self.screen_width*0.015)
+        sc_config_y = int(self.screen_height*0.025)
+        
+        self.system_configuration_screen = curses.newwin(sc_config_height, sc_config_width, sc_config_y, sc_config_x)
 
-         
+        # Calculate dimensions for the two partitions within the pop-up window
+        sc_config_top_height = max(int(0.6 * sc_config_height), 1)
+        sc_config_bottom_height = sc_config_height - sc_config_top_height
 
+        # Create windows for each partition within the pop-up window
+        sc_config_top_win = self.system_configuration_screen.subwin(sc_config_top_height, sc_config_width, sc_config_y, sc_config_x)
+        sc_config_bottom_win = self.system_configuration_screen.subwin(sc_config_bottom_height, sc_config_width, sc_config_y + sc_config_top_height, sc_config_x)
+
+        # Set background colors for each partition within the pop-up window
+        sc_config_top_win.bkgd(' ', curses.color_pair(1))  # Yellow background
+        sc_config_bottom_win.bkgd(' ', curses.color_pair(2))  # Grey background
+        
+        
+
+        #system configuration label 
+        sc_config_top_win.addstr(1, 2, SYSTEM_CONFIG_LABEL, curses.color_pair(4))
+        sc_config_top_win.addstr(3, 2, PASSWORD, curses.color_pair(4))
+        sc_config_top_win.addstr(4, 2, HOSTNAME, curses.color_pair(4))
+        sc_config_top_win.addstr(5, 2, SSH, curses.color_pair(4))
+        sc_config_top_win.addstr(6, 2, LOCK_DOWN_MODE, curses.color_pair(4))
 
         
+        self.system_configuration_screen.refresh()
+
+
 
 
     def run(self):
-        
-        
         while True:
-            
             print("App running")
     
             
